@@ -4,7 +4,7 @@ pipeline
 
     stages
     {
-        stages('CLONE GIT REPOSITORY')
+        stage('CLONE GIT REPOSITORY')
         {
             agent
             {
