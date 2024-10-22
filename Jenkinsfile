@@ -15,7 +15,7 @@ node('ubuntu-Appserver')
        }
          snykSecurity(
             snykInstallation: 'Snyk',
-            snykTokenId: 'Synkid',
+            snykTokenId: 'Snykid',
             severity: 'critical'
          )
        }
