@@ -1,83 +1,42 @@
-pipeline
+node('ubuntu-Appserver')
 {
-    agent none
-
-    stages
+    def app
+    stage('Cloning Git')
     {
-        stage('CLONE GIT REPOSITORY')
+    /* Let's make sure we have the repository cloned to our workspace */
+    checkout scm
+    }
+ 
+      stage('SCA-SAST-SNYK-TEST') 
+      {
+       agent 
+       {
+         label 'ubuntu-Appserver'
+       }
+         snykSecurity(
+            snykInstallation: 'Snyk',
+            snykTokenId: 'Synkid',
+            severity: 'critical'
+         )
+       }
+    stage('Build-and-Tag')
+    {
+        /* This builds the actual image; 
+        * This is synonymous to docker build on the command line */
+        app = docker.build("kevenmang/snake")
+    }
+    stage('Post-to-dockerhub')
+    {
+        docker.withRegistry('https://registry.hub.docker.com', 'dockerhub_credentials')
         {
-            agent
-            {
-                label 'ubuntu-Appserver'
-            }
-            steps
-            {
-                checkout scm
-            }
-        }
-
-        stage('SCA-SAST-SNYK-TEST')
-        {
-            agent
-            {
-                label 'ubuntu-Appserver'
-            }
-            steps
-            {
-                snykSecurity(
-                    snykInstallation: 'Snyk',
-                    snykTokenId: 'Snykid',
-                    severity: 'critical'
-                )
-            }
-        }
-
-        stage('BUILD-AND-TAG')
-        {
-            agent
-            {
-                label 'ubuntu-Appserver'
-            }
-            steps
-            {
-                script 
-                {
-                    def app = docker.build("kevenmang/snake")
-                    app.tag("latest")
-                }
-            }
-        }
-
-        stage('POST-TO-DOCKERHUB')
-        {
-            agent
-            {
-                label 'ubuntu-Appserver'
-            }
-            steps
-            {
-                script 
-                {
-                    docker.withRegistry("https://registry.hub.docker.com", "dockerhub_credentials")
-                    {
-                        def app = docker.image("kevenmang/snake")
-                        app.push("latest")
-                    }
-                }
-            }
-        }
-
-        stage('DEPLOYMENT')
-        {
-            agent
-            {
-                label 'ubuntu-Appserver'
-            }
-            steps
-            {
-                sh "docker-compose down"
-                sh "docker-compose up -d" 
-            }
+         app.push("latest")
         }
     }
+ 
+    stage('Pull-image-server')
+    {
+        sh "docker-compose down"
+        sh "docker-compose up -d"
+    }
+ 
 }
