@@ -19,6 +19,22 @@ node('ubuntu-Appserver')
         severity: 'critical'
         )
     }
+
+    stage('SonarQube Analysis')
+    {
+    agent
+        {
+            label 'ubuntu-Appserver'
+        }
+    script{
+        def scannerHome = tool 'SonarQubeScanner'
+        withSonarQubeEnv('sonarqube') {
+            sh "${scannerHome}/bin/sonar-scanner \
+                -Dsonar.projectKey=gameapp \
+                -Dsonar.sources=."
+        }
+    }
+    }
     
     stage('Build-and-Tag')
     {
